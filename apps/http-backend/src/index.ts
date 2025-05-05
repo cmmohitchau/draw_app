@@ -167,6 +167,20 @@ app.get("/chat/:roomId" , async (req , res) => {
     })
 })
 
+app.get("/roomId/:slug" , async (req , res) => {
+    const slug = req.params.slug;
+
+    const roomVar = await prismaClient.room.findFirst({
+        where : {
+            slug
+        }
+    })
+
+    res.json({
+        roomId : roomVar?.id
+    })
+})
+
 app.listen(3001 , () => {
     console.log("app is runnning on port " , 3001);
     
