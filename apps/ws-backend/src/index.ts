@@ -1,6 +1,7 @@
 import {WebSocketServer , WebSocket} from "ws";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import {JWT_SECRET} from "@repo/backend-common/config";
+import { prismaClient } from "@repo/db/client";
 
 const wss = new WebSocketServer({ port : 8081 });
 
@@ -39,6 +40,7 @@ wss.on('connection' , (ws , request) => {
     console.log("token : " , token);
     
     const userId = checkUser(token);
+    console.log("userId : " , userId);
     
     if(userId == null) {
         ws.close();
@@ -51,32 +53,41 @@ wss.on('connection' , (ws , request) => {
         rooms : []
     })
     
-    ws.on('message' , (data) => {
+    ws.on('message' , async (data) => {
         const parsedData = JSON.parse(data as unknown as string);
         // {type : "join_room" , roomId : 1}
-        const user = users.find(x => x.ws == ws);
         try {
-            console.log(parsedData.type);
             
             if(parsedData.type == "join_room") {
                 const user = users.find(x => x.ws == ws);
                 //Todo :- check access control
-                user?.rooms.push(parsedData.roomId);
+                user?.rooms.push(parsedData.RoomId);
             } else if(parsedData.type == "leave_room") {
                 const user = users.find(x => x.ws == ws);
                 if(!user) return;
-                user.rooms = user?.rooms.filter(x => x != parsedData.roomId);
+                user.rooms = user?.rooms.filter(x => x != parsedData.RoomId);
             } else if(parsedData.type == "chat") {
                 const user = users.find(x => x.ws == ws);
                 const message = parsedData.message;
-                const roomId = parsedData.roomId;
+                const RoomId = parsedData.RoomId;
+
+                const data = await prismaClient.chat.create({
+                    data : {
+                        messages : message,
+                        RoomId ,
+                        userId 
+                    }
+                })
+                
+                console.log("data : " , data);
+                
 
                 users.forEach(user => {
-                    if( user.rooms.includes(roomId) ) {
+                    if( user.rooms.includes(RoomId) ) {
                         user.ws.send(JSON.stringify({
                             type : "chat",
                             message,
-                            roomId
+                            RoomId
                         }));
                     }
                 })
