@@ -52,10 +52,11 @@ const Navbar = () => {
           <a href="#pricing" className="text-gray-700 hover:text-blue-600 transition-colors">
             Pricing
           </a>
-          <ModeToggle />
           <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors">
             Try Now
           </button>
+          <ModeToggle />
+
         </div>
 
         {/* Mobile Menu Button */}
