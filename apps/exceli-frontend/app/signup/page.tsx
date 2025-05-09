@@ -1,4 +1,4 @@
-import { Auth } from "@/components/AuthPage";
+import { Auth } from "@/components/ui/AuthPage";
 
 export default function Signup() {
 
