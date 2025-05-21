@@ -1,8 +1,5 @@
 import { Tool } from "@/components/clientComponent";
-import { BACKEND_URL } from "@repo/common/urls";
-import axios from "axios";
-import { Short_Stack } from "next/font/google";
-import { CanvasHTMLAttributes } from "react";
+import { getExistingShape } from "./http";
 
 type Shapes = {
     type : "rect";
@@ -27,15 +24,17 @@ export class Game {
     private canvas : HTMLCanvasElement;
     private ctx : CanvasRenderingContext2D | null;
     private existingShape : Shapes[];
-    private roomId : string;
-
+    private roomId : number;
     private clicked : boolean;
-    private startX : number;
-    private startY : number;
+    private startX : number = 0;
+    private startY : number = 0;
+    private endX : number = 0;
+    private endY : number = 0;
     private selectedTool : Tool = "rect";
 
     socket : WebSocket;
-    constructor(canvas : HTMLCanvasElement , roomId : string , socket : WebSocket) {
+
+    constructor(canvas : HTMLCanvasElement , roomId : number , socket : WebSocket) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.existingShape = [];
@@ -44,12 +43,14 @@ export class Game {
         this.clicked = false;
         this.init();
         this.initHandler();
-        this.initMouseHandlers();
-
+        this.initMouseHandler();
+        console.log("in game constructor");
     }
 
     destroy() {
-        this.canvas.removeEventListener("mousedown" , this.mouseHandler);
+        this.canvas.removeEventListener("mousedown" , this.mouseDownHandler);
+        this.canvas.removeEventListener("mouseup" , this.mouseUpHandler);
+        this.canvas.removeEventListener("mousemove" , this.mouseMoveHandler)
 
     }
 
@@ -58,22 +59,21 @@ export class Game {
     }
 
     async init() {
-        const res = await axios.get(`${BACKEND_URL}/chat/${this.roomId}`);
-        
+        this.existingShape = await getExistingShape(this.roomId);
+        console.log(this.existingShape);
+        this.clearCanvas();
     }
 
     initHandler() {
-        this.socket.onmessage = (event) => {
+        this.socket.addEventListener("message" , (event) => {
             const message = JSON.parse(event.data);
 
             if(message.type == "chat") {
                 const parsedShape = JSON.parse(message.message);
                 this.existingShape.push(parsedShape.shape);
                 this.clearCanvas();
-
             }
-
-        }
+        })
     }
 
     clearCanvas() {
@@ -111,6 +111,9 @@ export class Game {
         this.clicked = false
         const width = e.clientX - this.startX;
         const height = e.clientY - this.startY;
+        this.endX = e.clientX;
+        this.endY = e.clientY;
+        
 
         const selectedTool = this.selectedTool;
         let shape: Shapes | null = null;
@@ -131,6 +134,14 @@ export class Game {
                 centerX: this.startX + radius,
                 centerY: this.startY + radius,
             }
+        } else  {
+            const shape = {
+                type : "pencil",
+                startX : this.startX,
+                startY : this.startY,
+                endX : this.endX,
+                endY : this.endY
+            }
         }
 
         if (!shape) {
@@ -138,15 +149,18 @@ export class Game {
         }
 
         this.existingShape.push(shape);
+        console.log(this.existingShape);
+        
 
         this.socket.send(JSON.stringify({
             type: "chat",
             message: JSON.stringify({
                 shape
             }),
-            roomId: this.roomId
+            RoomId: this.roomId
         }))
     }
+
     mouseMoveHandler = (e : MouseEvent) => {
         if (this.clicked) {
             if(this.ctx) {
@@ -166,11 +180,23 @@ export class Game {
                     this.ctx.arc(centerX, centerY, Math.abs(radius), 0, Math.PI * 2);
                     this.ctx.stroke();
                     this.ctx.closePath();                
+                } else if (selectedTool === "pencil") {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.startX , this.startY);
+                    this.ctx.lineTo(this.endX , this.endY);
+                    this.ctx.stroke();
+                    this.ctx.closePath(); 
                 }
             }
         }
     }
 
+    initMouseHandler() {
+            this.canvas.addEventListener("mousedown", this.mouseDownHandler)
 
+            this.canvas.addEventListener("mouseup", this.mouseUpHandler)
 
+            this.canvas.addEventListener("mousemove", this.mouseMoveHandler)    
+
+    }
 }
