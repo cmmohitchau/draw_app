@@ -1,27 +1,21 @@
 import { type JSX } from "react";
+interface CardInterface {
+  className?: string;
+  title?: string;
+  children: React.ReactNode;
+  href?: string;
+}
 
 export function Card({
   className,
   title,
   children,
   href,
-}: {
-  className?: string;
-  title: string;
-  children: React.ReactNode;
-  href: string;
-}): JSX.Element {
+}:CardInterface ): JSX.Element {
   return (
-    <a
-      className={className}
-      href={`${href}?utm_source=create-turbo&utm_medium=basic&utm_campaign=create-turbo"`}
-      rel="noopener noreferrer"
-      target="_blank"
-    >
-      <h2>
-        {title} <span>-&gt;</span>
-      </h2>
-      <p>{children}</p>
-    </a>
+  <div className="max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+      {children}
+  </div>
+
   );
 }
