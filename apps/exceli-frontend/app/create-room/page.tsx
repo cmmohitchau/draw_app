@@ -5,16 +5,19 @@ import { Button } from "@repo/ui/button";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRoomIdServer } from "../create-room-server";
+import { createRoomServer } from "../create-room-server";
 
 export default function CreateRoom() {
     const [slug , setSlug] = useState("");
+    const [error , setError] = useState(false);
     const router = useRouter();
    async function handleRoom() {
-       const roomId = await getRoomIdServer(slug);
-       console.log("roomId  " , roomId);
-       
-       router.push(`/roomPage/${roomId}`);
+       const res = await createRoomServer(slug);
+       if(!res) {
+        setError(true);
+       } else {
+        router.push(`/canva/${slug}`);
+       }
     }
     return(
     <div className="min-h-screen p-2 flex justify-center">
@@ -35,6 +38,7 @@ export default function CreateRoom() {
                 onclick={handleRoom} />
                     
                 <Link href="/room" className="underline text-blue-500">join-room</Link>
+                {error ? <p className="text-red-400">Error while creating a room</p> : ""}
             </Card>
         </div>
     </div>

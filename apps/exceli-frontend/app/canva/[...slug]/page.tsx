@@ -5,10 +5,8 @@ import axios from "axios";
 
 async function getRoomId(slug : string) {
     
-    const res = await axios.get(`${BACKEND_URL}/roomId/${slug}`);
-        
+    const res = await axios.get(`${BACKEND_URL}/roomId/${slug}`);        
     return res.data.id;
-    
 }
 
 

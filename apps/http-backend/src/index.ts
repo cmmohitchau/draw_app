@@ -148,7 +148,8 @@ app.post("/room" , middleware ,async (req   , res) => {
                 adminId : userId
             }
         })
-
+        console.log(room);
+        
         
     
         res.status(200).json({

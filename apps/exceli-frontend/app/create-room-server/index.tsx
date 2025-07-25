@@ -3,29 +3,20 @@ import axios from "axios";
 import ClientComponent from "@/components/clientComponent";
 
 
-async function getRoomId(slug : string) {
-   const token = localStorage.getItem('token');
+export async function createRoomServer(slug : string) {
 
-const res = await axios.post(
-  `${BACKEND_URL}/room`,
-  { name: slug },
-  {
-    headers: {
-      authorization: token,
-    },
-  }
-);
+  const token = localStorage.getItem('token');
 
-return res.data.roomId;
+  const res = await axios.post(
+    `${BACKEND_URL}/room`,
+    { name: slug },
+    {
+      headers: {
+        authorization: token,
+      },
+    }
+  );
+  return res.data;
 
-
-}
-
-
-export async function getRoomIdServer(slug : string) {
-
-    const roomId =await getRoomId(slug);
-    
-    return roomId;
 }
 
