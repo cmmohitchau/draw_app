@@ -1,3 +1,4 @@
+"use client"
 import { WS_URL } from "@repo/common/urls";
 import { useEffect, useState } from "react";
 

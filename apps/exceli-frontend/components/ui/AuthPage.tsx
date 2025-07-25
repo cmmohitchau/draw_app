@@ -2,7 +2,7 @@
 import axios from "axios";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Link from 'next/link'
 import { useRouter } from "next/navigation";
 
@@ -11,26 +11,25 @@ interface AuthProps {
 }
 
 export function Auth({ isSignin }: AuthProps) {
-  const userNameRef = useRef<HTMLInputElement | null>(null);
-  const passwordRef = useRef<HTMLInputElement | null>(null);
-  const nameRef = useRef<HTMLInputElement | null> (null);
-
+  const [name , setName] = useState("");
+  const [password , setPassword] = useState("");
+  const [email , setEmail ] = useState("");
+  const [error , setError] = useState(false);
   const router = useRouter();
 
   async function  clickHandler() {
-    const email = userNameRef.current?.value;
-    const password = passwordRef.current?.value;
-    const name = nameRef.current?.value;
+
 
     if (!email || !password || (!isSignin && !name)) {
-      alert("Please fill in all required fields.");
+      setError(true);
       return;
     }
 
     
     try {
       let res;      
-
+      console.log(name , email , password);
+      
       if (isSignin) {
         res = await axios.post('http://localhost:3001/signin', { email, password });
       } else {
@@ -52,22 +51,24 @@ export function Auth({ isSignin }: AuthProps) {
                 {!isSignin && (
                   <div>
                     <label className="">Name</label>
-                    <Input className="my-2" ref={nameRef} placeholder="Name" />
+                    <Input className="px-2 py-2 my-2 w-full rounded"  onchange={(e) => setName(e.target.value)} placeholder="Name" />
                   </div>
                 )}
                 <label className="">Email</label>
-                <Input className="my-2"  ref={userNameRef} placeholder="Username (Email)" />
+                <Input className="px-2 py-2 my-2 w-full rounded" onchange={ (e) => setEmail(e.target.value) } placeholder="Username (Email)" />
                 <label className="">Password</label>
-                <Input className="my-2"
-                    ref={passwordRef}
+                <Input 
+                    onchange={(e) => setPassword(e.target.value)}
+                    className="px-2 py-2 my-2 w-full rounded"
                     type="password"
                     placeholder="Password"
                 />
-                <Button className="bg-green-500 rounded-2xl  w-full mt-8 cursor-pointer" size="lg" onClick={clickHandler}>
+                <Button className="bg-green-500 hover:bg-green-700 rounded-2xl  w-full mt-8 cursor-pointer" size="lg" onclick={clickHandler}>
                     {isSignin ? "Sign In" : "Sign Up"}
                 </Button>
                 {isSignin ? "Not have an account ? " : "Already have an account ? "}
                 {isSignin ? <Link href="/signup" className="" ><span className="underline"> Signup</span></Link> : <Link href="/signin" ><span className="underline"> Signin</span></Link>}
+                {error ? <p className="text-sm text-red-400">Please fill all the fields</p> : ""}
             </div>
         </div>
     </div>

@@ -5,12 +5,17 @@ import jwt from "jsonwebtoken";
 import { prismaClient } from "@repo/db/client"
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { middleware } from "./middleware";
-import { CustomRequest } from "@repo/backend-common/types";
-
+import cors from "cors";
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
+app.post("/server-check" , (req , res) => {
+    res.status(200).json({
+        message : "server is running"
+    })
+})
 
 app.post("/signup" , async(req : Request, res : Response) : Promise<any> => {
     const parsedData = signupSchema.safeParse(req.body);
@@ -20,9 +25,12 @@ app.post("/signup" , async(req : Request, res : Response) : Promise<any> => {
             message: "invalid input"
         });
     }
-
+    console.log("parsed data");
+    
     const { email, password, name } = parsedData.data;
     
+    
+        console.log("after parsed data");
 
     try {
         const existingUser = await prismaClient.user.findUnique({
@@ -30,17 +38,22 @@ app.post("/signup" , async(req : Request, res : Response) : Promise<any> => {
                 email
             }
         });
+            console.log("after existing user");
+
 
         if (existingUser) {
             return res.status(403).json({
                 message: "user already exist"
             });
         }
+            console.log("user does not exist");
+
         
 
         const salt = 10;
         const hashedPassword = await bcrypt.hash(password, salt);
-        
+            console.log("hashed password");
+
         const newUser = await prismaClient.user.create({
             data: {
                 email,
@@ -50,7 +63,7 @@ app.post("/signup" , async(req : Request, res : Response) : Promise<any> => {
         });
 
         
-        console.log("before token");
+        console.log("before token and after db save");
         
         const token = jwt.sign({ userId : newUser.id }, JWT_SECRET as string);
         console.log("after token");
