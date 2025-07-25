@@ -1,6 +1,6 @@
 "use client"
 import { Input } from "@repo/ui/input";
-import { Card } from "../room/page";
+import {Card} from "@repo/ui/card";
 import { Button } from "@repo/ui/button";
 import Link from "next/link";
 import { useState } from "react";
@@ -19,17 +19,16 @@ export default function CreateRoom() {
             <Input 
             placeholder="Room name" 
             className="pl-4" 
-            onChange={ (e) => setSlug(e.target.value)
+            onchange={ (e) => setSlug(e.target.value)
             } />
 
             <Button 
-            size="lg" 
             className="bg-green-400 
             w-full 
             cursor-pointer 
             rounded-2xl mt-4 " 
             children="Create Room" 
-            onClick={handleRoom} />
+            onclick={handleRoom} />
                 
             <Link href="/room">join-room</Link>
         </Card>
