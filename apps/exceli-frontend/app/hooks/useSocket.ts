@@ -15,18 +15,22 @@ export function useSocket(id : number) {
 
         ws.onopen = () => {
             setSocket(ws);
-            
             const data = JSON.stringify({
                 type : "join_room",
                 RoomId :id
             });
             ws.send(data);
             setLoading(false);            
-        }        
+        }
+
+        ws.onmessage = (message) => {
+            const parsedMessage = JSON.parse(message);
+            
+        }
         return () => {
         ws.close();
     };
-    } , []);
+    } , [socket]);
 
     return {loading , socket};
 }

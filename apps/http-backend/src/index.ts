@@ -6,16 +6,15 @@ import { prismaClient } from "@repo/db/client"
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { middleware } from "./middleware";
 import cors from "cors";
+import shapeRouter from "./routes/shape.route";
+
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.post("/server-check" , (req , res) => {
-    res.status(200).json({
-        message : "server is running"
-    })
-})
+
+app.use("/shape" , shapeRouter);
 
 app.post("/signup" , async(req : Request, res : Response) : Promise<any> => {
     const parsedData = signupSchema.safeParse(req.body);
@@ -194,6 +193,8 @@ app.get("/roomId/:slug" , async (req , res) => {
         roomId : roomVar?.id
     })
 })
+
+
 
 app.listen(3001 , () => {
     console.log("app is runnning on port " , 3001);

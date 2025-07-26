@@ -1,10 +1,22 @@
 "use client"
 import { useSocket } from "@/app/hooks/useSocket";
-import { useState } from "react";
+import { ArrowRight, Circle, Diamond, Eraser, Heading, Pencil, RectangleHorizontal, Redo, Slash, Triangle, Undo } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { IconButton } from "./ui/IconButton";
+import { Arrow } from "@radix-ui/react-dropdown-menu";
+import { Game } from "@/draw/Game";
+
+export type Tools = "rect" | "circle" | "line" | "rhombus" | "pencil" | "triangle" | "arrow" | "eraser";
+export type PencilPoints = {x : number , y : number};
+
+export type Shape =  {type : string , x : number , y : number , width : number , height : number , pencilPoints? : PencilPoints[] , color? : string};
 
 export default function ClientComponent({id} : {id : number}) {
     //id means roomId
     const {loading , socket} = useSocket(id);
+    const [selectedTool , setSelectedTool] = useState<Tools>("rect");
+    const [game , setGame] = useState<Game>();
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     if(loading || !socket) {
         return (
@@ -22,13 +34,115 @@ export default function ClientComponent({id} : {id : number}) {
 
     }
 
+    useEffect( () => {
+        game?.setTool(selectedTool);
+    } , [selectedTool , game]);
+
+    useEffect( () => {
+        if(canvasRef.current) {
+            const g = new Game(canvasRef.current , id , socket);
+            setGame(g);
+
+            return () => {
+                g.destroy();
+            }
+        }
+
+    } , [canvasRef])
 
 
     return(
-        <div>
-            <canvas width="120" height="120">
-                hi there
+        <div style={{
+            height : "100vh"
+        }}>
+            <canvas
+            ref={canvasRef}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            >
             </canvas>
         </div>
+    )
+}
+
+
+function Topbar({selectedTool , setSelectedTool} : {
+    selectedTool : Tools,
+    setSelectedTool : (s : Tools) => void
+}) {
+    return(
+        <div style={{
+            position: "fixed",
+            top: 10,
+            left: 10
+        }}>
+            <div>
+            <IconButton 
+            onClick={() => {
+                setSelectedTool("pencil")
+            }}
+            activated={selectedTool === "pencil"}
+            icon={<Pencil />}
+            />
+
+            <IconButton 
+            onClick={() => {
+                setSelectedTool("circle")
+            }}
+            activated={selectedTool === "circle"}
+            icon={<Circle />}
+            />
+
+            <IconButton 
+            onClick={() => {
+                setSelectedTool("rect")
+            }}
+            activated={selectedTool === "rect"}
+            icon={<RectangleHorizontal />}
+            />
+
+            <IconButton 
+            onClick={() => {
+                setSelectedTool("line")
+            }}
+            activated={selectedTool === "line"}
+            icon={<Slash />}
+            />
+
+            <IconButton 
+            onClick={() => {
+                setSelectedTool("arrow")
+            }}
+            activated={selectedTool === "arrow"}
+            icon={<ArrowRight />}
+            />
+
+            <IconButton 
+            onClick={() => {
+                setSelectedTool("rhombus")
+            }}
+            activated={selectedTool === "rhombus"}
+            icon={<Diamond />}
+            />
+
+            <IconButton 
+            onClick={() => {
+                setSelectedTool("eraser")
+            }}
+            activated={selectedTool === "eraser"}
+            icon={<Eraser />}
+            />
+
+            <IconButton 
+            onClick={() => {
+                setSelectedTool("triangle")
+            }}
+            activated={selectedTool === "triangle"}
+            icon={<Triangle />}
+            />
+            </div>
+        </div>
+        
+
     )
 }
