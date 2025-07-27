@@ -16,10 +16,10 @@ const roomMap: Map<string, Set<User>> = new Map();
 
 function checkUser(token: string): string | null {
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        if (typeof decoded === "string") return null;
-        if (!decoded || !(decoded as JwtPayload).userId) return null;
-        return (decoded as JwtPayload).userId;
+        const decoded = jwt.verify(token as string, JWT_SECRET as string) as {userId : string};
+
+        if (!decoded || !decoded.userId) return null;
+        return decoded.userId;
     } catch (e) {
         console.error("JWT verification failed:", e);
         return null;
@@ -30,19 +30,27 @@ wss.on("connection", (ws, request) => {
     console.log("Client connected");
 
     const url = request.url;
+    
     if (!url) {
         ws.close();
         return;
     }
 
     const queryParams = new URLSearchParams(url.split("?")[1]);
+    
     const token = queryParams.get("token") || "";
+    console.log("token from params " , token);
+    
     const userId = checkUser(token);
+    console.log("after userId " , userId);
+    
 
     if (!userId) {
         ws.close();
         return;
     }
+    console.log("after passing the check");
+    
 
     const user: User = {
         userId,
@@ -51,10 +59,13 @@ wss.on("connection", (ws, request) => {
     };
 
     users.push(user);
+    
 
     ws.on("message", async (data) => {
         try {
             const parsedData = JSON.parse(data.toString());
+            console.log("parsed Data received in ws server " , parsedData);
+            
             const { type } = parsedData;
 
             if (!type) {
@@ -69,7 +80,7 @@ wss.on("connection", (ws, request) => {
                         ws.send(JSON.stringify({ error: "Missing roomId" }));
                         return;
                     }
-                    console.log("joined in roomId in ws server");
+                    console.log("joined in roomId in ws server " , roomId);
                     
 
                     user.rooms.add(roomId);
@@ -102,8 +113,10 @@ wss.on("connection", (ws, request) => {
 
                 case "shape": {
                     const { roomId, shape } = parsedData;
+                    console.log("in ws shape is " , shape);
+                    
 
-                    if (!roomId || !shape || !shape.type) {
+                    if (!roomId || !shape || !shape || !shape.type) {
                         ws.send(JSON.stringify({ error: "Invalid shape payload" }));
                         return;
                     }
@@ -125,6 +138,8 @@ wss.on("connection", (ws, request) => {
                     const roomUsers = roomMap.get(roomId);
                     if (roomUsers) {
                         for (const u of roomUsers) {
+                            console.log("sending shape to the every user " , u);
+                            
                             u.ws.send(JSON.stringify({
                                 type: "shape",
                                 shape,

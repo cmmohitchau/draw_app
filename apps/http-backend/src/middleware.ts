@@ -1,6 +1,6 @@
 import { JWT_SECRET } from "@repo/backend-common/config";
 import { NextFunction, Request, Response } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 declare global {
   namespace Express {

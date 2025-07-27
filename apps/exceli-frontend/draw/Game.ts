@@ -65,9 +65,16 @@ export class Game {
     this.socket.addEventListener("message", (event) => {
       try {
         const parsedMessage = JSON.parse(event.data) // {type: "shape",shape,roomId,}
+        console.log("message sent by ws sever " , parsedMessage);
+        
         if (parsedMessage.type === "shape") {
-          const parsedShape = JSON.parse(parsedMessage.shape) //shape = { type: "Arrow", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
-          this.existingShape.push(parsedShape.shape)
+          const parsedShape = parsedMessage.shape //shape = { type: "Arrow", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
+          console.log("shape sent by ws server " , parsedShape);
+          console.log("before existing shape " , this.existingShape.length ,  this.existingShape);
+          
+          this.existingShape.push(parsedShape)
+          console.log("after existing shape " ,this.existingShape.length ,  this.existingShape);
+
           this.clearCanvas()
         }
       } catch (error) {
@@ -136,12 +143,14 @@ export class Game {
     }
 
     if (shape) {
-      this.existingShape.push(shape)
+      this.existingShape.push(shape);
+      console.log("sending shape in ws server " , shape);
+      
       this.socket.send(
         JSON.stringify({
           type: "shape",
-          shape: JSON.stringify({ shape }),
-          RoomId: this.roomId,
+          shape,
+          roomId: this.roomId,
         }),
       )
 

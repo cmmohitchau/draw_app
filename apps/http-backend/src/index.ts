@@ -107,7 +107,8 @@ app.post("/signin" , async (req  ,res) => {
             }
     
             const token = jwt.sign({userId : existingUser.id} , JWT_SECRET);
-    
+                console.log(token);
+                
                 res.status(200).json({
                 message : "user signed in successfully",
                 token
@@ -129,7 +130,6 @@ app.post("/signin" , async (req  ,res) => {
 app.post("/room" , middleware ,async (req   , res) => {
 
     const parsedData = roomSchema.safeParse(req.body);
-    console.log("after ");
     
     if(!parsedData.success) {
         res.status(401).json({

@@ -21,8 +21,7 @@ export type Shape = {
 }
 
 export default function ClientComponent({ id }: { id: number }) {
-  console.log("starting of client component")
-  console.log("Room id in client component", id)
+
 
   const { loading, socket } = useSocket(id);
 
@@ -57,7 +56,6 @@ export default function ClientComponent({ id }: { id: number }) {
       }
 
       const g = new Game(canvasRef.current, id, socket)
-      console.log("after calling game contructor ");
       
       setGame(g)
 
