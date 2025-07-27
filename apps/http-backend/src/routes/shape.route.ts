@@ -6,7 +6,7 @@ import { CreateShapes, DeleteRoomShape, DeleteShape, RoomShapes } from "../contr
 const router : Router  = Router();
 
 router.post("/", middleware, CreateShapes);
-router.get("/:id", middleware, RoomShapes);
+router.get("/:id", RoomShapes);
 router.post("/delete", middleware, DeleteShape);
 router.delete("/room/:id", middleware, DeleteRoomShape);
 

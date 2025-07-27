@@ -129,15 +129,15 @@ app.post("/signin" , async (req  ,res) => {
 app.post("/room" , middleware ,async (req   , res) => {
 
     const parsedData = roomSchema.safeParse(req.body);
-
+    console.log("after ");
+    
     if(!parsedData.success) {
         res.status(401).json({
             message : "invalid input"
         })
         return;
     } 
-    //@ts-ignore
-    const userId = req.userId;
+    const userId = req.id;
     
 
     try {

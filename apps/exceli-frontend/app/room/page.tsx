@@ -12,6 +12,8 @@ export default function Room() {
     const router = useRouter();
 
     function handleRoom() {
+        console.log("in room page before pushing to /canva/room-name");
+        
         router.push(`/canva/${name}`)
     }
     return(

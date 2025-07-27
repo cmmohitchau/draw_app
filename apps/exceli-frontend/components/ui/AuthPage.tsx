@@ -16,6 +16,8 @@ export function Auth({ isSignin }: AuthProps) {
   const [email , setEmail ] = useState("");
   const [error , setError] = useState(false);
   const router = useRouter();
+   console.log("in auth page")
+ 
 
   async function  clickHandler() {
 
@@ -28,13 +30,14 @@ export function Auth({ isSignin }: AuthProps) {
     
     try {
       let res;      
-      console.log(name , email , password);
       
       if (isSignin) {
         res = await axios.post('http://localhost:3001/signin', { email, password });
       } else {
         res = await axios.post('http://localhost:3001/signup', { email, password , name});
       }
+      console.log("response in authpage " , res.data);
+      
       localStorage.setItem("token" , res.data.token);
       router.push("/room")
       

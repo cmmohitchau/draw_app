@@ -9,14 +9,20 @@ import { createRoomServer } from "../create-room-server";
 
 export default function CreateRoom() {
     const [slug , setSlug] = useState("");
-    const [error , setError] = useState(false);
+    const [message , setMessage] = useState(null);
     const router = useRouter();
    async function handleRoom() {
        const res = await createRoomServer(slug);
+       console.log("after getting response in create room page " , res);
+       
        if(!res) {
-        setError(true);
+        setMessage(res.message);
        } else {
+        console.log("in create room page before pushing to /canva/room-name");
+        console.log("slug before routing:", slug);
         router.push(`/canva/${slug}`);
+        console.log("slug after routing:", slug);
+
        }
     }
     return(
@@ -38,7 +44,7 @@ export default function CreateRoom() {
                 onclick={handleRoom} />
                     
                 <Link href="/room" className="underline text-blue-500">join-room</Link>
-                {error ? <p className="text-red-400">Error while creating a room</p> : ""}
+                {message ? <p className="text-red-400">{message}</p> : ""}
             </Card>
         </div>
     </div>

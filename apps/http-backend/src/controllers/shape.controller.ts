@@ -8,7 +8,7 @@ export const CreateShapes = async (req: Request, res: Response) => {
             res.status(400).json({message:"User is not Valid!"})
             return;
         }
-        const room=await prismaClient.room.findFirst({where:{slug:req.body.slug}})
+        const room=await prismaClient.room.findFirst({where:{slug:req.body.name}})
         if(!room){
             res.status(400).json({message:"Room is not Valid!"})
             return;
@@ -38,7 +38,8 @@ export const RoomShapes = async (req: Request, res: Response) => {
             res.status(400).json({message:"User is not Valid!"})
             return;
         }
-        const room=await prismaClient.room.findFirst({where:{slug:req.params.id}})
+        const roomId = req.params.id;
+        const room=await prismaClient.room.findFirst({where:{id:Number(roomId)}})
         if(!room){
             res.status(400).json({message:"Room is not Valid!"})
             return;

@@ -1,36 +1,54 @@
-"use client"
+// useSocket.ts
+"use client";
+
+import { Shape } from "@/components/clientComponent";
 import { WS_URL } from "@repo/common/urls";
 import { useEffect, useState } from "react";
 
-export function useSocket(id : number) {
+const socketCache: { [roomId: number]: WebSocket } = {};
 
-    const [loading , setLoading] = useState(true);
-    const [socket , setSocket] = useState<WebSocket | null>(null);
+export function useSocket(id: number) {
+  console.log("starting of useSocket");
 
-    useEffect( () => {
-        const token = localStorage.getItem("token");
-        console.log("roomId in use socket : " , id);
-        
-        const ws = new WebSocket(`${WS_URL}?token=${token}`);
+  const [loading, setLoading] = useState(true);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
 
-        ws.onopen = () => {
-            setSocket(ws);
-            const data = JSON.stringify({
-                type : "join_room",
-                RoomId :id
-            });
-            ws.send(data);
-            setLoading(false);            
-        }
+  useEffect(() => {
+    if (socketCache[id]) {
+      console.log("Using cached socket for room", id);
+      setSocket(socketCache[id]);
+      setLoading(false);
+      return;
+    }
 
-        ws.onmessage = (message) => {
-            const parsedMessage = JSON.parse(message);
-            
-        }
-        return () => {
-        ws.close();
+    const token = localStorage.getItem("token");
+    const ws = new WebSocket(`${WS_URL}?token=${token}`);
+
+    socketCache[id] = ws;
+
+    ws.onopen = () => {
+      setSocket(ws);
+      ws.send(
+        JSON.stringify({
+          type: "join_room",
+          RoomId: id,
+        })
+      );
+      setLoading(false);
+      console.log("after setting socket in useSocket");
     };
-    } , [socket]);
 
-    return {loading , socket};
+    ws.onclose = () => {
+      console.log("WebSocket closed for room", id);
+      delete socketCache[id]; // Clear cache on close
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [id]);
+
+   
+
+  return { loading, socket };
 }

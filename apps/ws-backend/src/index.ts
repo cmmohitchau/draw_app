@@ -69,6 +69,8 @@ wss.on("connection", (ws, request) => {
                         ws.send(JSON.stringify({ error: "Missing roomId" }));
                         return;
                     }
+                    console.log("joined in roomId in ws server");
+                    
 
                     user.rooms.add(roomId);
 
