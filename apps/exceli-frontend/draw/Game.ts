@@ -98,29 +98,29 @@ export class Game {
   mouseUpHandler = (e: MouseEvent) => {
     this.clicked = false
     const rect = this.canvas.getBoundingClientRect()
-    const endX = e.clientX - rect.left
-    const endY = e.clientY - rect.top
-    const width = endX - this.start.x
-    const height = endY - this.start.y
+    if(this.start.x == 0 && this.start.y == 0) return;
+    const x  = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    this.end.x = endX
-    this.end.y = endY
+    const width = x - this.start.x;
+    const height = y - this.start.y;
+    
 
     const selectedTool = this.selectedTool
     let shape: Shape | null = null
 
     if (selectedTool === "Rectangle") {
-      shape = { type: "Rectangle", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
+      shape = { type: "Rectangle", x, y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Circle") {
-      shape = { type: "Circle", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
+      shape = { type: "Circle", x, y: this.start.y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Line") {
-      shape = { type: "Line", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
+      shape = { type: "Line", x, y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Triangle") {
-      shape = { type: "Triangle", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
+      shape = { type: "Triangle", x, y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Arrow") {
-      shape = { type: "Arrow", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
+      shape = { type: "Arrow", x, y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Rhombus") {
-      shape = { type: "Rhombus", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
+      shape = { type: "Rhombus", x, y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Pencil") {
       shape = {
         type: "Pencil",
