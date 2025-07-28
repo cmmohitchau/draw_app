@@ -92,7 +92,7 @@ export default function ClientComponent({ id }: { id: number }) {
   return (
     <div style={{ height: "100vh" }}>
       <Topbar selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
-      <canvas ref={canvasRef} width={window.innerWidth} height={window.innerHeight} style={{ display: "block" }}>
+      <canvas className="overflow:hidden" ref={canvasRef} width={window.innerWidth} height={window.innerHeight} style={{ display: "block" }}>
         {/* Fallback content for browsers that don't support canvas */}
         Your browser does not support the canvas element. Selected tool: {selectedTool}
       </canvas>

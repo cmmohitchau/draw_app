@@ -28,7 +28,7 @@ export class Game {
     this.roomId = roomId
     this.socket = socket
     this.clicked = false
-    this.strokeColor = "rgba(0 , 0 , 0 , 1)"
+    this.strokeColor = "rgba(255, 255 , 255 , 1)"
     this.newShapesAfterErasing = null
     this.strokeWidth = 1
     this.start = { x: 0, y: 0 }
@@ -51,10 +51,8 @@ export class Game {
   }
 
   async init() {
-    console.log("in init function before existing shape", this.roomId)
     try {
       this.existingShape = await getExistingShapes(this.roomId)
-      console.log("after getting existing shapes", this.existingShape)
       this.clearCanvas()
     } catch (error) {
       console.error("Error loading existing shapes:", error)
@@ -65,16 +63,10 @@ export class Game {
     this.socket.addEventListener("message", (event) => {
       try {
         const parsedMessage = JSON.parse(event.data) // {type: "shape",shape,roomId,}
-        console.log("message sent by ws sever " , parsedMessage);
         
         if (parsedMessage.type === "shape") {
           const parsedShape = parsedMessage.shape //shape = { type: "Arrow", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
-          console.log("shape sent by ws server " , parsedShape);
-          console.log("before existing shape " , this.existingShape.length ,  this.existingShape);
-          
           this.existingShape.push(parsedShape)
-          console.log("after existing shape " ,this.existingShape.length ,  this.existingShape);
-
           this.clearCanvas()
         }
       } catch (error) {
@@ -85,16 +77,17 @@ export class Game {
 
   clearCanvas() {
     if (this.ctx) {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-      this.drawPreviousShapes(this.existingShape, this.canvas)
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = "rgba(0, 0, 0)"
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawPreviousShapes(this.existingShape, this.canvas)
     }
   }
 
   mouseDownHandler = (e: MouseEvent) => {
     this.clicked = true
-    const rect = this.canvas.getBoundingClientRect()
-    this.start.x = e.clientX - rect.left
-    this.start.y = e.clientY - rect.top
+    this.start.x = e.clientX;
+    this.start.y = e.clientY;
 
     // Reset pencil points for new drawing
     if (this.selectedTool === "Pencil") {
@@ -104,30 +97,30 @@ export class Game {
 
   mouseUpHandler = (e: MouseEvent) => {
     this.clicked = false
-    const rect = this.canvas.getBoundingClientRect()
     if(this.start.x == 0 && this.start.y == 0) return;
-    const x  = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  const rect = this.canvas.getBoundingClientRect();
+  const endX = e.clientX - rect.left;
+  const endY = e.clientY - rect.top;
 
-    const width = x - this.start.x;
-    const height = y - this.start.y;
+  const width = endX - this.start.x;
+  const height = endY - this.start.y;
     
 
     const selectedTool = this.selectedTool
     let shape: Shape | null = null
 
     if (selectedTool === "Rectangle") {
-      shape = { type: "Rectangle", x, y, height, width, color: this.strokeColor }
+      shape = { type: "Rectangle", x : this.start.x, y : this.start.y , height, width, color: this.strokeColor }
     } else if (selectedTool === "Circle") {
-      shape = { type: "Circle", x, y: this.start.y, height, width, color: this.strokeColor }
+      shape = { type: "Circle", x : this.start.x, y : this.start.y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Line") {
-      shape = { type: "Line", x, y, height, width, color: this.strokeColor }
+      shape = { type: "Line", x : this.start.x, y : this.start.y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Triangle") {
-      shape = { type: "Triangle", x, y, height, width, color: this.strokeColor }
+      shape = { type: "Triangle",x : this.start.x, y : this.start.y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Arrow") {
-      shape = { type: "Arrow", x, y, height, width, color: this.strokeColor }
+      shape = { type: "Arrow", x : this.start.x, y : this.start.y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Rhombus") {
-      shape = { type: "Rhombus", x, y, height, width, color: this.strokeColor }
+      shape = { type: "Rhombus", x : this.start.x, y : this.start.y, height, width, color: this.strokeColor }
     } else if (selectedTool === "Pencil") {
       shape = {
         type: "Pencil",
@@ -144,7 +137,6 @@ export class Game {
 
     if (shape) {
       this.existingShape.push(shape);
-      console.log("sending shape in ws server " , shape);
       
       this.socket.send(
         JSON.stringify({
@@ -382,12 +374,11 @@ export class Game {
     canvas: HTMLCanvasElement,
     chooseColors: string,
   ) => {
-    const rect = canvas.getBoundingClientRect()
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    const x = e.clientX - this.start.x;
+    const y = e.clientY - this.start.y;
     pencilPoints.push({ x, y })
 
     ctx.strokeStyle = chooseColors

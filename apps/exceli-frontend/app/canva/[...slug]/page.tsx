@@ -26,7 +26,6 @@ export default async function Canvas({
     
     const roomId = await getRoomId(slug);
     
-    console.log("in canva room after getting roomId " , roomId);
     
     return <ClientComponent id={roomId} />
 
