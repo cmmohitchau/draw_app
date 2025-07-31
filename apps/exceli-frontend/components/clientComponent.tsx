@@ -1,14 +1,15 @@
 "use client"
 
 import { useSocket } from "@/app/hooks/useSocket"
-import { ArrowRight, Circle, Diamond, Eraser, Pencil, RectangleHorizontal, Slash, Triangle } from "lucide-react"
+import { ArrowRight, Circle, Diamond, Eraser, Pencil, RectangleHorizontal, Slash, TextIcon, Triangle, Type } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { IconButton } from "./ui/IconButton"
 import { Game } from "@/draw/Game"
 
-export type Tools = "Rectangle" | "Circle" | "Line" | "Rhombus" | "Pencil" | "Triangle" | "Arrow" | "Eraser"
+export type Tools = "Rectangle" | "Circle" | "Line" | "Rhombus" | "Pencil" | "Triangle" | "Arrow" | "Eraser" | "Text";
 
 export type PencilPoints = { x: number; y: number }
+export type SizeKey = "XS" | "S" | "M" | "L" | "XL";
 
 export type Shape = {
   type: string
@@ -18,7 +19,17 @@ export type Shape = {
   height: number
   pencilPoints?: PencilPoints[]
   color?: string
+} 
+
+export type TextType = {
+  x : number,
+  y : number,
+  font : string,
+  color : string,
+  fontSize : string,
+  content : string
 }
+
 
 export default function ClientComponent({ id }: { id: number }) {
 
@@ -90,7 +101,7 @@ export default function ClientComponent({ id }: { id: number }) {
   }
 
   return (
-    <div style={{ height: "100vh" }}>
+    <div style={{ height: "100vh" , background : "black" }}>
       <Topbar selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
       <canvas className="overflow:hidden" ref={canvasRef} width={window.innerWidth} height={window.innerHeight} style={{ display: "block" }}>
         {/* Fallback content for browsers that don't support canvas */}
@@ -140,6 +151,11 @@ function Topbar({
           onClick={() => setSelectedTool("Triangle")}
           activated={selectedTool === "Triangle"}
           icon={<Triangle />}
+        />
+        <IconButton
+          onClick={ () => setSelectedTool("Text")}
+          activated={selectedTool === "Text"}
+          icon={<Type />}
         />
       </div>
     </div>

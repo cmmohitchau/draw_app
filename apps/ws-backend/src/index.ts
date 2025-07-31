@@ -12,7 +12,26 @@ interface User {
 }
 
 const users: User[] = [];
-const roomMap: Map<string, Set<User>> = new Map();
+const roomMap: Map <string, Set<User>> = new Map();
+
+function sendData(roomUsers : any , type : string, shape :  any, roomId : number) {
+    if (roomUsers) {
+        for (const u of roomUsers) {
+            console.log("sending shape to the every userfrom ws  " , JSON.stringify({
+                type,
+                shape,
+                roomId,
+            }));
+            
+            u.ws.send(JSON.stringify({
+                type,
+                shape,
+                roomId,
+            }));
+        }
+    }
+    
+}
 
 function checkUser(token: string): string | null {
     try {
@@ -63,10 +82,10 @@ wss.on("connection", (ws, request) => {
 
     ws.on("message", async (data) => {
         try {
-            const parsedData = JSON.parse(data.toString());
-            console.log("parsed Data received in ws server " , parsedData);
-            
+            const parsedData = JSON.parse(data.toString());            
             const { type } = parsedData;
+            console.log("parsed data in ws server " , parsedData);
+            
 
             if (!type) {
                 ws.send(JSON.stringify({ error: "Missing type field" }));
@@ -113,7 +132,6 @@ wss.on("connection", (ws, request) => {
 
                 case "shape": {
                     const { roomId, shape } = parsedData;
-                    console.log("in ws shape is " , shape);
                     
 
                     if (!roomId || !shape || !shape || !shape.type) {
@@ -136,23 +154,36 @@ wss.on("connection", (ws, request) => {
                     });
 
                     const roomUsers = roomMap.get(roomId);
-                    if (roomUsers) {
-                        for (const u of roomUsers) {
-                            console.log("sending shape to the every user " , u);
-                            
-                            u.ws.send(JSON.stringify({
-                                type: "shape",
-                                shape,
-                                roomId,
-                            }));
-                        }
-                    }
+                    sendData(roomUsers , type , shape , roomId);
 
                     break;
                 }
 
                 case "chat": {
-                    // Placeholder
+                    const { shape , roomId } = parsedData;
+                    console.log("shape in type chat " , shape);
+                    
+                    if (!roomId || !shape ) {
+                        ws.send(JSON.stringify({ error: "Invalid shape payload" }));
+                        return;
+                    }
+
+                    await prismaClient.chat.create({
+                        data : {
+                            RoomId : roomId,
+                            userId: user.userId,
+                            x: shape.x,
+                            y: shape.y,
+                            fontSize: "M",
+                            content : shape.content,
+                            font: shape.font,
+                            color: shape.color,
+                        }
+                    })
+                    const roomUsers = roomMap.get(roomId);
+                    console.log("after checking shape sent in ws " , shape );
+                    
+                    sendData(roomUsers , type , shape , roomId);
                     break;
                 }
 

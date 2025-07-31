@@ -1,5 +1,7 @@
-import type { PencilPoints, Shape, Tools } from "@/components/clientComponent"
-import { getExistingShapes } from "./http"
+import type { PencilPoints, Shape, SizeKey, TextType, Tools } from "@/components/clientComponent"
+import { getExistingShapes, getExistingTexts } from "./http"
+import { TextSearch } from "lucide-react"
+import { text } from "stream/consumers"
 
 interface axis {
   x: number
@@ -10,10 +12,13 @@ export class Game {
   private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D | null
   private existingShape: Shape[]
+  private existingText : TextType[]
   private roomId: number
   private clicked: boolean
   private start: axis
   private end: axis
+  private font : string;
+  private fontSize : SizeKey;
   private strokeColor: string
   private strokeWidth: number
   private selectedTool: Tools = "Rectangle"
@@ -25,6 +30,7 @@ export class Game {
     this.canvas = canvas
     this.ctx = canvas.getContext("2d")
     this.existingShape = []
+    this.existingText = []
     this.roomId = roomId
     this.socket = socket
     this.clicked = false
@@ -34,7 +40,8 @@ export class Game {
     this.start = { x: 0, y: 0 }
     this.end = { x: 0, y: 0 }
     this.pencilPoints = []
-
+    this.font = "Arial"
+    this.fontSize = "M"
     this.init()
     this.initHandler()
     this.initMouseHandler()
@@ -52,7 +59,8 @@ export class Game {
 
   async init() {
     try {
-      this.existingShape = await getExistingShapes(this.roomId)
+      this.existingShape = await getExistingShapes(this.roomId);
+      this.existingText = await getExistingTexts(this.roomId);
       this.clearCanvas()
     } catch (error) {
       console.error("Error loading existing shapes:", error)
@@ -63,11 +71,19 @@ export class Game {
     this.socket.addEventListener("message", (event) => {
       try {
         const parsedMessage = JSON.parse(event.data) // {type: "shape",shape,roomId,}
+        console.log("parsed data in fe " , parsedMessage);
         
         if (parsedMessage.type === "shape") {
           const parsedShape = parsedMessage.shape //shape = { type: "Arrow", x: this.start.x, y: this.start.y, height, width, color: this.strokeColor }
           this.existingShape.push(parsedShape)
           this.clearCanvas()
+        } else if(parsedMessage.type === "chat") {
+          
+          const chat = parsedMessage.shape;
+          console.log("chat format in fe " , chat);
+
+          this.existingText.push(chat);
+          this.clearCanvas();
         }
       } catch (error) {
         console.error("Error processing WebSocket message:", error)
@@ -80,9 +96,10 @@ export class Game {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = "rgba(0, 0, 0)"
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.drawPreviousShapes(this.existingShape, this.canvas)
+        this.drawPreviousShapes(this.existingShape, this.canvas , this.existingText);
     }
   }
+
 
   mouseDownHandler = (e: MouseEvent) => {
     this.clicked = true
@@ -93,15 +110,23 @@ export class Game {
     if (this.selectedTool === "Pencil") {
       this.pencilPoints = []
     }
+
+    if(this.selectedTool === "Text") {
+      console.log("mouse down handler when text is chosen");
+      
+      this.writeText(this.ctx);
+
+    }
   }
 
   mouseUpHandler = (e: MouseEvent) => {
-    this.clicked = false
-    if(this.start.x == 0 && this.start.y == 0) return;
+    
+  this.clicked = false
+  if (this.selectedTool === "Text") return;
   const rect = this.canvas.getBoundingClientRect();
   const endX = e.clientX - rect.left;
   const endY = e.clientY - rect.top;
-
+  
   const width = endX - this.start.x;
   const height = endY - this.start.y;
     
@@ -133,6 +158,9 @@ export class Game {
       }
     } else if (selectedTool === "Eraser") {
       // Handle eraser logic here
+    } else {
+      console.log("mouse is up");
+      
     }
 
     if (shape) {
@@ -155,6 +183,7 @@ export class Game {
 
   mouseMoveHandler = (e: MouseEvent) => {
     if (this.clicked && this.ctx) {
+      if(this.selectedTool === "Text") return;
       const rect = this.canvas.getBoundingClientRect()
       const currentX = e.clientX - rect.left
       const currentY = e.clientY - rect.top
@@ -187,55 +216,88 @@ export class Game {
     }
   }
 
+  mouseDoubleClick = (e : MouseEvent) => {
+    this.clicked = true
+    console.log("double mouse click");
+    
+    this.start.x = e.clientX;
+    this.start.y = e.clientY;
+    this.writeText(this.ctx);
+  }
+
   initMouseHandler() {
     this.canvas.addEventListener("mousedown", this.mouseDownHandler)
     this.canvas.addEventListener("mouseup", this.mouseUpHandler)
     this.canvas.addEventListener("mousemove", this.mouseMoveHandler)
+    this.canvas.addEventListener("dblclick", this.mouseDoubleClick)
+
   }
 
-  drawPreviousShapes = (existingShapes: Shape[], canvas: HTMLCanvasElement) => {
+  drawPreviousShapes = (existingShapes: Shape[], canvas: HTMLCanvasElement , existingTexts : TextType[]) => {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    existingShapes.forEach((shape) => {
-      ctx.strokeStyle = shape.color || this.strokeColor
-      ctx.lineWidth = this.strokeWidth
+    if(existingShapes ) {
+      existingShapes.forEach((shape) => {
+        ctx.strokeStyle = shape.color || this.strokeColor
+        ctx.lineWidth = this.strokeWidth
 
-      if (shape.type === "Rectangle") {
-        ctx.strokeRect(shape.x, shape.y, shape.width, shape.height)
-      } else if (shape.type === "Circle") {
-        ctx.beginPath()
-        ctx.ellipse(
-          shape.x + shape.width / 2,
-          shape.y + shape.height / 2,
-          Math.abs(shape.width) / 2,
-          Math.abs(shape.height) / 2,
-          0,
-          0,
-          2 * Math.PI,
-        )
-        ctx.stroke()
-      } else if (shape.type === "Line") {
-        ctx.beginPath()
-        ctx.moveTo(shape.x, shape.y)
-        ctx.lineTo(shape.x + shape.width, shape.y + shape.height)
-        ctx.stroke()
-      } else if (shape.type === "Triangle") {
-        const midX = shape.x + shape.width / 2
-        ctx.beginPath()
-        ctx.moveTo(midX, shape.y)
-        ctx.lineTo(shape.x, shape.y + shape.height)
-        ctx.lineTo(shape.x + shape.width, shape.y + shape.height)
-        ctx.closePath()
-        ctx.stroke()
-      } else if (shape.type === "Arrow") {
-        this.drawArrowShape(ctx, shape)
-      } else if (shape.type === "Rhombus") {
-        this.drawRhombusShape(ctx, shape)
-      } else if (shape.type === "Pencil") {
-        this.drawPencilShape(ctx, shape)
+        if (shape.type === "Rectangle") {
+          ctx.strokeRect(shape.x, shape.y, shape.width, shape.height)
+        } else if (shape.type === "Circle") {
+          ctx.beginPath()
+          ctx.ellipse(
+            shape.x + shape.width / 2,
+            shape.y + shape.height / 2,
+            Math.abs(shape.width) / 2,
+            Math.abs(shape.height) / 2,
+            0,
+            0,
+            2 * Math.PI,
+          )
+          ctx.stroke()
+        } else if (shape.type === "Line") {
+          ctx.beginPath()
+          ctx.moveTo(shape.x, shape.y)
+          ctx.lineTo(shape.x + shape.width, shape.y + shape.height)
+          ctx.stroke()
+        } else if (shape.type === "Triangle") {
+          const midX = shape.x + shape.width / 2
+          ctx.beginPath()
+          ctx.moveTo(midX, shape.y)
+          ctx.lineTo(shape.x, shape.y + shape.height)
+          ctx.lineTo(shape.x + shape.width, shape.y + shape.height)
+          ctx.closePath()
+          ctx.stroke()
+        } else if (shape.type === "Arrow") {
+          this.drawArrowShape(ctx, shape)
+        } else if (shape.type === "Rhombus") {
+          this.drawRhombusShape(ctx, shape)
+        } else if (shape.type === "Pencil") {
+          this.drawPencilShape(ctx, shape)
+        }
+      })
+    }
+    const fontSizeMap: Record<SizeKey, string> = {
+    XS : "12px",
+    S : "14px",
+    M: "16px",
+    L: "18px",
+    XL : "20px"
+
+    };    
+    if(existingTexts ) {
+        existingTexts.forEach( (textShape) => {
+          console.log("iterating through existing shape");
+          
+          const fontSize = fontSizeMap[textShape.fontSize as SizeKey] || "14px";
+          ctx.font = `${fontSize} ${textShape.font}`;
+          ctx.fillStyle = textShape.color || this.strokeColor;
+          ctx.fillText(textShape.content , textShape.x , textShape.y);
+        })
       }
-    })
+
+
   }
 
   // Preview methods that don't clear the canvas
@@ -406,4 +468,72 @@ export class Game {
 
     ctx.stroke()
   }
+
+  writeText(ctx : CanvasRenderingContext2D | null) {
+    
+    if( !this.canvas || !ctx) return;
+    console.log("in write text function");
+    
+
+    const input = document.createElement('input');
+    input.type = "text";
+    input.style.position = "absolute";
+    const rect = this.canvas.getBoundingClientRect();
+    input.style.left = `${this.start.x + rect.left}px`;
+    input.style.top = `${this.start.y + rect.top}px`;
+    input.style.background = "transparent";
+    input.style.border = "2px solid red";
+    input.style.color = this.strokeColor;
+    input.style.font = this.font;
+    input.style.zIndex = "1000";
+
+    document.body.appendChild(input);
+    setTimeout(() => input.focus(), 0); // Fix for cursor focus
+    console.log("after input focus");
+    
+
+    const submitText = () => {
+      const text = input.value.trim();
+      console.log("text in input is " , text);
+      
+      if(text) {
+        const textShape : TextType = {
+          x : this.start.x,
+          y : this.start.y,
+          color : this.strokeColor,
+          font : this.font,
+          fontSize : this.fontSize,
+          content : text
+        }
+        console.log("text shape in fe " , textShape);
+        
+      this.existingText.push(textShape);
+      console.log("existing text " , this.existingText);
+      console.log("format sending from fe to ws " , JSON.stringify({
+          type : "chat",
+          shape : textShape,
+          roomId : this.roomId
+        }));
+      this.socket.send(
+        JSON.stringify({
+          type : "chat",
+          shape : textShape,
+          roomId : this.roomId
+        })
+      );
+
+      this.clearCanvas();
+      }
+      document.body.removeChild(input);
+    };
+
+    input.addEventListener("keydown" , (e) => {
+      if(e.key === "Enter") {
+        submitText();
+      }
+    });
+    input.addEventListener("blur" , submitText);
+  }
+
+
 }
